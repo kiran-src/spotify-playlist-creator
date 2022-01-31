@@ -41,7 +41,6 @@ def get_date():
         try:
             month = int(input())
             if not 1 <= month <= 12:
-                print("A")
                 raise ValueError()
             check = False
         except ValueError:
@@ -52,7 +51,6 @@ def get_date():
         try:
             day = int(input())
             if day < 1 or day > month_days[month - 1]:
-                print("A")
                 raise ValueError()
             check = False
         except ValueError:
@@ -83,13 +81,25 @@ titles = [soup.find(id="title-of-a-story", name="h3", class_="c-title a-no-truca
 for i in raw_titles:
     titles.append(i.get_text()[1:-1])
 
-scope = "user-library-read"
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENTID, client_secret=SECRET, redirect_uri=URI, scope="playlist-modify-public", show_dialog=True))
 
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENTID, client_secret=SECRET, redirect_uri=URI))
 
-results = sp.search(type='track', q=titles[1])
-pprint(results["tracks"]["items"][0]["name"])
-print(titles[1])
-tracks=[]
+sp.user_playlist_create(user=print(sp.current_user()['id']), name=f'Hits from {chosen_date.year:04d}-{chosen_date.month:02d}-{chosen_date.day:02d}', public=True, description=f'The top 100 songs on the billboard on {chosen_date.year:04d}-{chosen_date.month:02d}-{chosen_date.day:02d}')
+
+tracks = []
+for i in titles:
+    a = sp.search(type='track', q=i)["tracks"]["items"]
+    if len(a) != 0:
+        b = a[0]
+        c = b["uri"]
+        print(b["name"])
+        tracks.append(c)
+    else:
+        print(f"*******TRACK NOT FOUND********{i}")
+
+
+print(tracks)
+print(len(tracks))
+
 #sp.user_playlist_add_tracks(user='jxaweaogwz7q2todcaaaphcky', playlist_id='', tracks=tracks, position=None)
-#sp.user_playlist_create(user='jxaweaogwz7q2todcaaaphcky', name=f'Hits from {chosen_date.year:04d}-{chosen_date.month:02d}-{chosen_date.day:02d}', public=True, description=f'The top 100 songs on the billboard on {chosen_date.year:04d}-{chosen_date.month:02d}-{chosen_date.day:02d}')
+#https://open.spotify.com/user/jxaweaogwz7q2todcaaaphcky?si=D7E7kRMVQ02mRpHYa9pupw
