@@ -7,6 +7,8 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import os
 
+
+
 CLIENTID = os.environ.get('SPOTIPY_CLIENT_ID')
 SECRET = os.environ.get('SPOTIPY_CLIENT_SECRET')
 URI = os.environ.get('SPOTIPY_REDIRECT_URI')
@@ -81,25 +83,67 @@ titles = [soup.find(id="title-of-a-story", name="h3", class_="c-title a-no-truca
 for i in raw_titles:
     titles.append(i.get_text()[1:-1])
 
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENTID, client_secret=SECRET, redirect_uri=URI, scope="playlist-modify-public", show_dialog=True))
-
-
-sp.user_playlist_create(user=print(sp.current_user()['id']), name=f'Hits from {chosen_date.year:04d}-{chosen_date.month:02d}-{chosen_date.day:02d}', public=True, description=f'The top 100 songs on the billboard on {chosen_date.year:04d}-{chosen_date.month:02d}-{chosen_date.day:02d}')
-
-tracks = []
-for i in titles:
-    a = sp.search(type='track', q=i)["tracks"]["items"]
-    if len(a) != 0:
-        b = a[0]
-        c = b["uri"]
-        print(b["name"])
-        tracks.append(c)
-    else:
-        print(f"*******TRACK NOT FOUND********{i}")
-
-
-print(tracks)
-print(len(tracks))
+print(chosen_date)
+#scope = "playlist-modify-public"
+# sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=CLIENTID, client_secret=SECRET, redirect_uri=URI, scope=scope, show_dialog=True))
+#
+#
+# sp.user_playlist_create(user=print(sp.current_user()['id']), name=f'Hits from {chosen_date.year:04d}-{chosen_date.month:02d}-{chosen_date.day:02d}', public=True, description=f'The top 100 songs on the billboard on {chosen_date.year:04d}-{chosen_date.month:02d}-{chosen_date.day:02d}')
+#
+# tracks = []
+# for i in titles:
+#     a = sp.search(type='track', q=i)["tracks"]["items"]
+#     if len(a) != 0:
+#         b = a[0]
+#         c = b["uri"]
+#         print(b["name"])
+#         tracks.append(c)
+#     else:
+#         print(f"*******TRACK NOT FOUND********{i}")
+#
+#
+# print(tracks)
+# print(len(tracks))
 
 #sp.user_playlist_add_tracks(user='jxaweaogwz7q2todcaaaphcky', playlist_id='', tracks=tracks, position=None)
 #https://open.spotify.com/user/jxaweaogwz7q2todcaaaphcky?si=D7E7kRMVQ02mRpHYa9pupw
+#
+
+
+#********************
+headers = {
+    "Authorization": "Bearer BQCwiuHbkFtbjDnysjQFitevfaUB8OVkNwA--NkijugdgdCKeYD-FalUPntE-wgFPjGqR6EyRfEizZcf52SzXt-oHwNKmQnCMB_V7lFNuq_6YZ3mCTU4Fh9fVC2UQecE71OQpfmIqJ3wrSqio4sNNR5kRf10PUsW8FpZdAwfSDiOxs7K0KmgRHZt6hERrxN9UTFsvPFS8uWykBSAIrgRqG2qKKzL",
+    "Content-Type": "application/json"
+}
+playlist_url = "https://api.spotify.com/v1/users/jxaweaogwz7q2todcaaaphcky/playlists"
+params = {
+    "name": f"Hit Playlist from {chosen_date}",
+    "description": f"The billboard's top 100 songs from the day {chosen_date}",
+    "public": "false"
+}
+response = requests.post(url=playlist_url, headers=headers, json=params)
+response.raise_for_status()
+print(response)
+playlist_id = response.json()["id"]
+song_url = "https://api.spotify.com/v1/search"
+song_uri = []
+for i in titles:
+    params = {
+        "q": "track:"+i,
+        "type": "track"
+    }
+    response = requests.get(url=song_url, params=params, headers=headers)
+    if response.status_code >=200 and response.status_code <300:
+        if len(response.json()["tracks"]["items"])>0:
+            song_uri.append(response.json()["tracks"]["items"][0]["uri"])
+
+print("Length")
+print(len(song_uri))
+
+add_song_url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+params = {
+    "uris": song_uri,
+}
+response = requests.post(url=add_song_url, headers=headers, json=params)
+print(response)
+response.raise_for_status()
